@@ -4,7 +4,8 @@ module Lib.Color exposing (
   lime, green, aqua, teal, blue, navy, fuchsia, purple
   )
 
--- A color in RGB hex notation.
+{-| A color in RGB hex notation.
+-}
 type Color = Color String
 
 hexValue : Color -> String

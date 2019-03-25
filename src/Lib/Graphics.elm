@@ -8,15 +8,19 @@ import Svg.Events
 import Lib.Color exposing (Color, hexValue)
 import Lib.List exposing (filterMaybes)
 
--- A "scaled vector graphic" element that can be drawn on a canvas.
+
+{-| A "scaled vector graphic" element that can be drawn on a canvas.
+-}
 type alias Svg e = Svg.Svg e
 
--- Create an 'Svg e' rectangle.
+
+{-| Create an 'Svg e' rectangle.
+-}
 drawRect :
   { x0 : Float -- top-left corner x-coord
   , y0 : Float -- top-left corner y-coord
-  , width : Float -- choose rectangle width
-  , height : Float -- choose rectangle height
+  , width : Float -- choose rectangle width (in coordinates, not in pixels)
+  , height : Float -- choose rectangle height (in coordinates, not in pixels)
   , fill : Color -- choose fill color
   , onClick : Maybe e -- optionally, an event when clicked
   } ->
@@ -34,10 +38,14 @@ drawRect props =
   in
   Svg.rect attrb []
 
--- A web page consisting of a single container for graphical elements.
+
+{-| A web page consisting of a single container for graphical elements.
+-}
 type alias Canvas e = Browser.Document e
 
--- Create a canvas.
+
+{-| Create a canvas.
+-}
 canvas :
   { title : String -- title of web page
   , widthPx : Int -- width of canvas in pixels

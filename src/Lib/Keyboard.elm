@@ -1,357 +1,247 @@
 module Lib.Keyboard exposing
   ( KeyEvent(..)
   , Key(..)
-  , keyPress
-  , keyDown
-  , keyUp
-  , keyPresses
-  , keyDowns
-  , keyUps
-  , showKey
+  , keyEvents
   )
 
 import Browser.Events
-import Json.Decode
+import Json.Decode exposing (andThen, fail, field, string, succeed)
 
+
+{-| An event that triggers whenever a key is pressed down or released.
+Bear in mind, these events correspond to keys, not to characters.
+-}
 type KeyEvent
-  = KeyPress Key
-  | KeyDown Key
-  | KeyUp Key
+  = KeyEventDown Key
+  | KeyEventUp Key
 
--- | Extract the `Key` from a `KeyPress` event.
-keyPress : KeyEvent -> Maybe Key
-keyPress event =
-  case event of
-    KeyPress key -> Just key
-    _ -> Nothing
 
--- | Extract the `Key` from a `KeyDown` event.
-keyDown : KeyEvent -> Maybe Key
-keyDown event =
-  case event of
-    KeyDown key -> Just key
-    _ -> Nothing
-
--- | Extract the `Key` from a `KeyUp` event.
-keyUp : KeyEvent -> Maybe Key
-keyUp event =
-  case event of
-    KeyUp key -> Just key
-    _ -> Nothing
-
--- | Subscribe to key press events.
-keyPresses : Sub KeyEvent
-keyPresses = Sub.map KeyPress (Browser.Events.onKeyPress keyDecoder)
-
--- | Subscribe to key down events.
-keyDowns : Sub KeyEvent
-keyDowns = Sub.map KeyDown (Browser.Events.onKeyDown keyDecoder)
-
--- | Subscribe to key up events.
-keyUps : Sub KeyEvent
-keyUps = Sub.map KeyUp (Browser.Events.onKeyUp keyDecoder)
-
--- | Represents keys, not characters. In particular, does not distinguish
--- | between lower case and upper case.
+{-| A `Key` represents a physical key on the keyboard, not a character.
+In particular, the `Key` type does not distinguish between lower case
+and upper case.
+-}
 type Key
-  = K_Escape
-  | K_F1
-  | K_F2
-  | K_F3
-  | K_F4
-  | K_F5
-  | K_F6
-  | K_F7
-  | K_F8
-  | K_F9
-  | K_F10
-  | K_F11
-  | K_F12
-  | K_Insert
-  | K_Delete
-  | K_Home
-  | K_End
-  | K_PageUp
-  | K_PageDown
-  | K_Up
-  | K_Left
-  | K_Down
-  | K_Right
-  | K_Tab
-  | K_CapsLock
-  | K_Shift
-  | K_Control
-  | K_Alt
-  | K_Backspace
-  | K_Enter
-  | K_Space
-  | K_Backtick
-  | K_Hyphen
-  | K_Equals
-  | K_LeftBracket
-  | K_RightBracket
-  | K_Backslash
-  | K_Semicolon
-  | K_Apostrophe
-  | K_Comma
-  | K_Period
-  | K_Slash
-  | K_1
-  | K_2
-  | K_3
-  | K_4
-  | K_5
-  | K_6
-  | K_7
-  | K_8
-  | K_9
-  | K_0
-  | K_Q
-  | K_W
-  | K_E
-  | K_R
-  | K_T
-  | K_Y
-  | K_U
-  | K_I
-  | K_O
-  | K_P
-  | K_A
-  | K_S
-  | K_D
-  | K_F
-  | K_G
-  | K_H
-  | K_J
-  | K_K
-  | K_L
-  | K_Z
-  | K_X
-  | K_C
-  | K_V
-  | K_B
-  | K_N
-  | K_M
-  | K_Other String
+  = KeyEscape
+  | KeyF1
+  | KeyF2
+  | KeyF3
+  | KeyF4
+  | KeyF5
+  | KeyF6
+  | KeyF7
+  | KeyF8
+  | KeyF9
+  | KeyF10
+  | KeyF11
+  | KeyF12
+  | KeyInsert
+  | KeyDelete
+  | KeyHome
+  | KeyEnd
+  | KeyPageUp
+  | KeyPageDown
+  | KeyUp
+  | KeyLeft
+  | KeyDown
+  | KeyRight
+  | KeyTab
+  | KeyCapsLock
+  | KeyShift
+  | KeyControl
+  | KeyAlt
+  | KeyBackspace
+  | KeyEnter
+  | KeySpace
+  | KeyBacktick
+  | KeyHyphen
+  | KeyEquals
+  | KeyLeftBracket
+  | KeyRightBracket
+  | KeyBackslash
+  | KeySemicolon
+  | KeyApostrophe
+  | KeyComma
+  | KeyPeriod
+  | KeySlash
+  | Key1
+  | Key2
+  | Key3
+  | Key4
+  | Key5
+  | Key6
+  | Key7
+  | Key8
+  | Key9
+  | Key0
+  | KeyQ
+  | KeyW
+  | KeyE
+  | KeyR
+  | KeyT
+  | KeyY
+  | KeyU
+  | KeyI
+  | KeyO
+  | KeyP
+  | KeyA
+  | KeyS
+  | KeyD
+  | KeyF
+  | KeyG
+  | KeyH
+  | KeyJ
+  | KeyK
+  | KeyL
+  | KeyZ
+  | KeyX
+  | KeyC
+  | KeyV
+  | KeyB
+  | KeyN
+  | KeyM
 
--- | Render a `Key` value as a string
-showKey : Key -> String
-showKey key =
-  case key of
-    K_Escape -> "K_Escape"
-    K_F1 -> "K_F1"
-    K_F2 -> "K_F2"
-    K_F3 -> "K_F3"
-    K_F4 -> "K_F4"
-    K_F5 -> "K_F5"
-    K_F6 -> "K_F6"
-    K_F7 -> "K_F7"
-    K_F8 -> "K_F8"
-    K_F9 -> "K_F9"
-    K_F10 -> "K_F10"
-    K_F11 -> "K_F11"
-    K_F12 -> "K_F12"
-    K_Insert -> "K_Insert"
-    K_Delete -> "K_Delete"
-    K_Home -> "K_Home"
-    K_End -> "K_End"
-    K_PageUp -> "K_PageUp"
-    K_PageDown -> "K_PageDown"
-    K_Up -> "K_Up"
-    K_Left -> "K_Left"
-    K_Down -> "K_Down"
-    K_Right -> "K_Right"
-    K_Tab -> "K_Tab"
-    K_CapsLock -> "K_CapsLock"
-    K_Shift -> "K_Shift"
-    K_Control -> "K_Control"
-    K_Alt -> "K_Alt"
-    K_Backspace -> "K_Backspace"
-    K_Enter -> "K_Enter"
-    K_Space -> "K_Space"
-    K_Backtick -> "K_Backtick"
-    K_Hyphen -> "K_Hyphen"
-    K_Equals -> "K_Equals"
-    K_LeftBracket -> "K_LeftBracket"
-    K_RightBracket -> "K_RightBracket"
-    K_Backslash -> "K_Backslash"
-    K_Semicolon -> "K_Semicolon"
-    K_Apostrophe -> "K_Apostrophe"
-    K_Comma -> "K_Comma"
-    K_Period -> "K_Period"
-    K_Slash -> "K_Slash"
-    K_1 -> "K_1"
-    K_2 -> "K_2"
-    K_3 -> "K_3"
-    K_4 -> "K_4"
-    K_5 -> "K_5"
-    K_6 -> "K_6"
-    K_7 -> "K_7"
-    K_8 -> "K_8"
-    K_9 -> "K_9"
-    K_0 -> "K_0"
-    K_Q -> "K_Q"
-    K_W -> "K_W"
-    K_E -> "K_E"
-    K_R -> "K_R"
-    K_T -> "K_T"
-    K_Y -> "K_Y"
-    K_U -> "K_U"
-    K_I -> "K_I"
-    K_O -> "K_O"
-    K_P -> "K_P"
-    K_A -> "K_A"
-    K_S -> "K_S"
-    K_D -> "K_D"
-    K_F -> "K_F"
-    K_G -> "K_G"
-    K_H -> "K_H"
-    K_J -> "K_J"
-    K_K -> "K_K"
-    K_L -> "K_L"
-    K_Z -> "K_Z"
-    K_X -> "K_X"
-    K_C -> "K_C"
-    K_V -> "K_V"
-    K_B -> "K_B"
-    K_N -> "K_N"
-    K_M -> "K_M"
-    K_Other str -> "K_Other " ++ str
 
-keyDecoder : Json.Decode.Decoder Key
-keyDecoder =
+{-| Subscribe to key events.
+-}
+keyEvents : Sub KeyEvent
+keyEvents =
   let
-    decodeKey =
-      Json.Decode.field "key" Json.Decode.string
+    keyDecoder = field "key" string |> andThen parseKey
 
     parseKey str =
       case str of
-        "Escape" -> K_Escape
-        "F1" -> K_F1
-        "F2" -> K_F2
-        "F3" -> K_F3
-        "F4" -> K_F4
-        "F5" -> K_F5
-        "F6" -> K_F6
-        "F7" -> K_F7
-        "F8" -> K_F8
-        "F9" -> K_F9
-        "F10" -> K_F10
-        "F11" -> K_F11
-        "F12" -> K_F12
-        "Insert" -> K_Insert
-        "Delete" -> K_Delete
-        "Home" -> K_Home
-        "End" -> K_End
-        "PageUp" -> K_PageUp
-        "PageDown" -> K_PageDown
-        "ArrowUp" -> K_Up
-        "ArrowLeft" -> K_Left
-        "ArrowDown" -> K_Down
-        "ArrowRight" -> K_Right
-        "Tab" -> K_Tab
-        "CapsLock" -> K_CapsLock
-        "Shift" -> K_Shift
-        "Control" -> K_Control
-        "Alt" -> K_Alt
-        "Backspace" -> K_Backspace
-        "Enter" -> K_Enter
-        " " -> K_Space
-        "`" -> K_Backtick
-        "~" -> K_Backtick
-        "-" -> K_Hyphen
-        "_" -> K_Hyphen
-        "=" -> K_Equals
-        "+" -> K_Equals
-        "[" -> K_LeftBracket
-        "{" -> K_LeftBracket
-        "]" -> K_RightBracket
-        "}" -> K_RightBracket
-        "\\" -> K_Backslash
-        "|" -> K_Backslash
-        ";" -> K_Semicolon
-        ":" -> K_Semicolon
-        "'" -> K_Apostrophe
-        "\"" -> K_Apostrophe
-        "," -> K_Comma
-        "<" -> K_Comma
-        "." -> K_Period
-        ">" -> K_Period
-        "/" -> K_Slash
-        "?" -> K_Slash
-        "1" -> K_1
-        "!" -> K_1
-        "2" -> K_2
-        "@" -> K_2
-        "3" -> K_3
-        "#" -> K_3
-        "4" -> K_4
-        "$" -> K_4
-        "5" -> K_5
-        "%" -> K_5
-        "6" -> K_6
-        "^" -> K_6
-        "7" -> K_7
-        "&" -> K_7
-        "8" -> K_8
-        "*" -> K_8
-        "9" -> K_9
-        "(" -> K_9
-        "0" -> K_0
-        ")" -> K_0
-        "q" -> K_Q
-        "Q" -> K_Q
-        "w" -> K_W
-        "W" -> K_W
-        "e" -> K_E
-        "E" -> K_E
-        "r" -> K_R
-        "R" -> K_R
-        "t" -> K_T
-        "T" -> K_T
-        "y" -> K_Y
-        "Y" -> K_Y
-        "u" -> K_U
-        "U" -> K_U
-        "i" -> K_I
-        "I" -> K_I
-        "o" -> K_O
-        "O" -> K_O
-        "p" -> K_P
-        "P" -> K_P
-        "a" -> K_A
-        "A" -> K_A
-        "s" -> K_S
-        "S" -> K_S
-        "d" -> K_D
-        "D" -> K_D
-        "f" -> K_F
-        "F" -> K_F
-        "g" -> K_G
-        "G" -> K_G
-        "h" -> K_H
-        "H" -> K_H
-        "j" -> K_J
-        "J" -> K_J
-        "k" -> K_K
-        "K" -> K_K
-        "l" -> K_L
-        "L" -> K_L
-        "z" -> K_Z
-        "Z" -> K_Z
-        "x" -> K_X
-        "X" -> K_X
-        "c" -> K_C
-        "C" -> K_C
-        "v" -> K_V
-        "V" -> K_V
-        "b" -> K_B
-        "B" -> K_B
-        "n" -> K_N
-        "N" -> K_N
-        "m" -> K_M
-        "M" -> K_M
-        _ -> K_Other str
+        "Escape" -> succeed KeyEscape
+        "F1" -> succeed KeyF1
+        "F2" -> succeed KeyF2
+        "F3" -> succeed KeyF3
+        "F4" -> succeed KeyF4
+        "F5" -> succeed KeyF5
+        "F6" -> succeed KeyF6
+        "F7" -> succeed KeyF7
+        "F8" -> succeed KeyF8
+        "F9" -> succeed KeyF9
+        "F10" -> succeed KeyF10
+        "F11" -> succeed KeyF11
+        "F12" -> succeed KeyF12
+        "Insert" -> succeed KeyInsert
+        "Delete" -> succeed KeyDelete
+        "Home" -> succeed KeyHome
+        "End" -> succeed KeyEnd
+        "PageUp" -> succeed KeyPageUp
+        "PageDown" -> succeed KeyPageDown
+        "ArrowUp" -> succeed KeyUp
+        "ArrowLeft" -> succeed KeyLeft
+        "ArrowDown" -> succeed KeyDown
+        "ArrowRight" -> succeed KeyRight
+        "Tab" -> succeed KeyTab
+        "CapsLock" -> succeed KeyCapsLock
+        "Shift" -> succeed KeyShift
+        "Control" -> succeed KeyControl
+        "Alt" -> succeed KeyAlt
+        "Backspace" -> succeed KeyBackspace
+        "Enter" -> succeed KeyEnter
+        " " -> succeed KeySpace
+        "`" -> succeed KeyBacktick
+        "~" -> succeed KeyBacktick
+        "-" -> succeed KeyHyphen
+        "_" -> succeed KeyHyphen
+        " =" -> succeed KeyEquals
+        "+" -> succeed KeyEquals
+        "[" -> succeed KeyLeftBracket
+        "{" -> succeed KeyLeftBracket
+        "]" -> succeed KeyRightBracket
+        "}" -> succeed KeyRightBracket
+        "\\" -> succeed KeyBackslash
+        "|" -> succeed KeyBackslash
+        ";" -> succeed KeySemicolon
+        ":" -> succeed KeySemicolon
+        "'" -> succeed KeyApostrophe
+        "\"" -> succeed KeyApostrophe
+        "," -> succeed KeyComma
+        "<" -> succeed KeyComma
+        "." -> succeed KeyPeriod
+        ">" -> succeed KeyPeriod
+        "/" -> succeed KeySlash
+        "?" -> succeed KeySlash
+        "1" -> succeed Key1
+        "!" -> succeed Key1
+        "2" -> succeed Key2
+        "@" -> succeed Key2
+        "3" -> succeed Key3
+        "#" -> succeed Key3
+        "4" -> succeed Key4
+        "$" -> succeed Key4
+        "5" -> succeed Key5
+        "%" -> succeed Key5
+        "6" -> succeed Key6
+        "^" -> succeed Key6
+        "7" -> succeed Key7
+        "&" -> succeed Key7
+        "8" -> succeed Key8
+        "*" -> succeed Key8
+        "9" -> succeed Key9
+        "(" -> succeed Key9
+        "0" -> succeed Key0
+        ")" -> succeed Key0
+        "q" -> succeed KeyQ
+        "Q" -> succeed KeyQ
+        "w" -> succeed KeyW
+        "W" -> succeed KeyW
+        "e" -> succeed KeyE
+        "E" -> succeed KeyE
+        "r" -> succeed KeyR
+        "R" -> succeed KeyR
+        "t" -> succeed KeyT
+        "T" -> succeed KeyT
+        "y" -> succeed KeyY
+        "Y" -> succeed KeyY
+        "u" -> succeed KeyU
+        "U" -> succeed KeyU
+        "i" -> succeed KeyI
+        "I" -> succeed KeyI
+        "o" -> succeed KeyO
+        "O" -> succeed KeyO
+        "p" -> succeed KeyP
+        "P" -> succeed KeyP
+        "a" -> succeed KeyA
+        "A" -> succeed KeyA
+        "s" -> succeed KeyS
+        "S" -> succeed KeyS
+        "d" -> succeed KeyD
+        "D" -> succeed KeyD
+        "f" -> succeed KeyF
+        "F" -> succeed KeyF
+        "g" -> succeed KeyG
+        "G" -> succeed KeyG
+        "h" -> succeed KeyH
+        "H" -> succeed KeyH
+        "j" -> succeed KeyJ
+        "J" -> succeed KeyJ
+        "k" -> succeed KeyK
+        "K" -> succeed KeyK
+        "l" -> succeed KeyL
+        "L" -> succeed KeyL
+        "z" -> succeed KeyZ
+        "Z" -> succeed KeyZ
+        "x" -> succeed KeyX
+        "X" -> succeed KeyX
+        "c" -> succeed KeyC
+        "C" -> succeed KeyC
+        "v" -> succeed KeyV
+        "V" -> succeed KeyV
+        "b" -> succeed KeyB
+        "B" -> succeed KeyB
+        "n" -> succeed KeyN
+        "N" -> succeed KeyN
+        "m" -> succeed KeyM
+        "M" -> succeed KeyM
+        _ -> fail ("unrecognized keycode: " ++ str)
+
+    keyDowns =
+      Sub.map KeyEventDown (Browser.Events.onKeyDown keyDecoder)
+
+    keyUps =
+      Sub.map KeyEventUp (Browser.Events.onKeyUp keyDecoder)
 
   in
-  Json.Decode.map parseKey decodeKey
+  Sub.batch [keyDowns, keyUps]
