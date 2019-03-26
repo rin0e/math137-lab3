@@ -22,6 +22,7 @@ The program will not be very fast.
 The reason is our game board data is stored as a function, but functions are not very efficient at _storing_ data (functions are efficient at _transforming_ data).
 
 We need to convert our game board function into a data structure at each clock tick.
+The functions and types needed to do this can be found in `Lib.Memoize`.
 This will not require big changes to your program, in fact the change will be quite painless, but it is a bit technical, so I'll help you with this step.
 
 Once done, try your program again in the browser.
