@@ -20,12 +20,12 @@ import Life exposing (Board, Cell, CellStatus(..), nextBoard)
 
 -- A type for your game state. As your game gets more features, you will
 -- probably add more fields to this type.
-type alias State = { board : Board }
+type alias State = { board : Board, paused : Bool }
 
 
 -- A type for your game events. As your game gets more features, you will
 -- probably add more variants to this type.
-type Event = NoOp
+type Event = NoOp | CellClick Cell
 
 
 main : Game.Game State Event
@@ -42,9 +42,26 @@ initialState : State
 initialState =
   let
     startingBoard : Board
-    startingBoard cell = todo "startingBoard"
+    startingBoard cell = 
+      case (cell.x, cell.y) of
+        (1, 0) -> Alive
+        (2, 1) -> Alive
+        (0, 2) -> Alive
+        (1, 2) -> Alive
+        (2, 2) -> Alive
+        (_, _) -> Dead
   in
-  { board = startingBoard }
+  { board = startingBoard, paused = True }
+
+memoStrat : Memoize.MemoizeStrategy (Int, Int) Cell CellStatus
+memoStrat =
+  let
+      cellToPair cell = (cell.x, cell.y)
+      pairToCell (x0, y0) = { x = x0, y = y0 }
+      allPairs = List.map cellToPair allCells
+      defaultStatus = Dead
+    in
+    { toKey = cellToPair, fromKey = pairToCell, domain = allPairs, default = defaultStatus }
 
 
 -- This function uses the incoming event and the current game state to
@@ -54,24 +71,58 @@ updateGame event currentState =
   case event of
     -- What to do when we get a `ClockTick`
     Game.ClockTick timestamp ->
-      let
-        updatedBoard = todo "updatedBoard"
-      in
-      { board = updatedBoard }
+      if currentState.paused
+        then currentState
+        else
+          let
+            updatedBoard = nextBoard currentState.board
+            memoizedBoard = Memoize.memoize memoStrat updatedBoard  
+          in
+          { board = memoizedBoard, paused = currentState.paused }
 
     -- What to do when the player presses or releases a key
     Game.Keyboard keyEvent ->
-      currentState -- for now, we're ignoring keyboard events
+      case keyEvent of
+        Keyboard.KeyEventDown Keyboard.KeySpace ->
+          let
+              currentPaused = currentState.paused
+              newPaused = case currentPaused of
+                True -> False
+                False -> True
+          in
+          {board = currentState.board , paused = newPaused}
+        _ -> currentState
 
     -- What to do when we get a `NoOp`
     Game.Custom NoOp->
       currentState
 
+    Game.Custom (CellClick cell) ->
+      let
+          newBoard = flipCell cell currentState.board
+      in
+      { board = newBoard, paused = currentState.paused }
+      
+flipCell : Cell -> Board -> Board
+flipCell clickedCell oldBoard =
+  let
+    newBoard : Cell -> CellStatus
+    newBoard cell =
+      if cell == clickedCell
+        then 
+          case oldBoard cell of
+           Dead -> Alive
+           Alive -> Dead
+        else oldBoard cell
+      -- todo "if cell and clickedCell are the same, do the opposite of what the old board says"
+      -- todo "if cell and clickedCell are different, just plug c into the old board"
+  in
+  newBoard
 
 -- Pick a size for the game board.
 -- Hint: Use this when you go to write `drawCell` and `drawGame`
 boardSize : Int
-boardSize = todo "boardSize"
+boardSize = 30
 
 
 -- The list of all cells based on your `boardSize`.
@@ -88,20 +139,36 @@ allCells =
 drawGame : State -> Graphics.Canvas Event
 drawGame state =
   let
-    drawCell : Cell -> Graphics.Svg a
+    drawCell : Cell -> Graphics.Svg Event
     drawCell cell =
       let
         cellStatus : CellStatus
-        cellStatus = todo "cellStatus"
+        cellStatus = state.board(cell)
 
         cellColor : Color.Color
-        cellColor = todo "cellColor"
-
+        cellColor = 
+          case cellStatus of
+            Alive -> Color.lime
+            Dead -> Color.navy
       in
-      Graphics.drawRect (todo "drawRect inputs")
+      Graphics.drawRect 
+        { x0 = toFloat cell.x
+        , y0 = toFloat cell.y
+        , width = (1)
+        , height = (1)
+        , fill = cellColor
+        , onClick = Just (CellClick cell)
+        }
 
-    cells : List (Graphics.Svg a)
+    cells : List (Graphics.Svg Event)
     cells = List.map drawCell allCells
 
   in
-  Graphics.canvas (todo "canvas inputs")
+  Graphics.canvas
+    { title = "Erins Game of Life"
+    , widthPx = 300
+    , heightPx = 300
+    , xMax = toFloat boardSize
+    , yMax = toFloat boardSize
+    , children = cells
+    }

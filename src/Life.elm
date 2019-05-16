@@ -13,15 +13,53 @@ type alias Board = Cell -> CellStatus
 -- current status.
 nextStatus : Int -> CellStatus -> CellStatus
 nextStatus numberOfLivingNeighbors currentStatus =
-  todo "Copy your Lab 2 Code Here!"
+  case (currentStatus, numberOfLivingNeighbors) of
+    (Alive, 2) -> Alive
+    (Alive, 3) -> Alive
+    (Alive, _) -> Dead
+    (Dead, 3) -> Alive
+    (Dead, _) -> Dead
 
 -- calculates the number of living neighbors of a cell,
 -- given a board and a cell.
 livingNeighbors : Board -> Cell -> Int
 livingNeighbors currentBoard { x, y } =
-  todo "Copy your Lab 2 Code Here!"
+  let
+    neighbors : List Cell
+    neighbors =
+      [ { x = x - 1, y = y - 1 }
+      , { x = x    , y = y - 1 }
+      , { x = x + 1, y = y - 1 }
+      , { x = x - 1, y = y     }
+      , { x = x + 1, y = y     }
+      , { x = x - 1, y = y + 1 }
+      , { x = x    , y = y + 1 }
+      , { x = x + 1, y = y + 1 }
+      ]
+
+    statuses : List CellStatus
+    statuses = List.map currentBoard neighbors
+
+    numericStatus : CellStatus -> Int
+    numericStatus status =
+      case status of
+        Alive -> 1
+        Dead -> 0
+
+    numericStatuses : List Int
+    numericStatuses = List.map (numericStatus) (statuses)
+
+    listSum : Int
+    listSum = List.sum numericStatuses
+  in
+  listSum
 
 -- calculates the next board given the current board.
 nextBoard : Board -> Board
 nextBoard currentBoard =
-  todo "Copy your Lab 2 Code Here!"
+ let
+    theNextBoard : Cell -> CellStatus
+    theNextBoard cell =
+      nextStatus (livingNeighbors currentBoard cell) (currentBoard cell)
+  in
+  theNextBoard
